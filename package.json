@@ -15,6 +15,7 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "dayjs": "^1.11.13",
@@ -31,7 +32,8 @@
     "jsonwebtoken": "^9.0.2",
     "module-alias": "^2.2.3",
     "morgan": "^1.10.1",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "redis": "^5.7.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

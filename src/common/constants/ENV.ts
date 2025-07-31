@@ -13,6 +13,8 @@ const ENV = jetEnv({
   Port: num,
   PgConnectionString: str, 
   JwtSecret: str,
+  GeminiApiKey: str,
+  RedisUrl: str,
 });
 
 

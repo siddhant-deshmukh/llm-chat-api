@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import HttpStatusCodes from '@src/common/constants/HttpStatusCodes';
 import { ChangePassword, ForgotPassword, SendOtp, SignIn, SignUp, VerifyOtp } from '@src/services/auth.service';
-import { RouteError } from '@src/common/util/route-errors';
+import { RouteError } from '@src/util/route-errors';
 import { authenticateToken } from '@src/middleware/auth.middleware';
 
 const authRouter = Router();

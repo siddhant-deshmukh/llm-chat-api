@@ -16,8 +16,6 @@ export const payments = pgTable('payments', {
   status: text('status').notNull(),
 });
 
-
-
 export const subscriptions = pgTable('subscriptions', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),

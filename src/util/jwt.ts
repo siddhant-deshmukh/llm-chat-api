@@ -8,6 +8,7 @@ interface JwtPayload {
   userId: number;
   mobileNo: string;
   verified: boolean;
+  subscriptionExpiring: Date | null;
 }
 
 export const generateToken = (payload: JwtPayload): string => {

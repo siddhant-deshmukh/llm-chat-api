@@ -1,7 +1,7 @@
 
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken } from '@src/common/util/jwt';
-import { RouteError } from '@src/common/util/route-errors';
+import { verifyToken } from '@src/util/jwt';
+import { RouteError } from '@src/util/route-errors';
 import HttpStatusCodes from '@src/common/constants/HttpStatusCodes';
 
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
@@ -14,6 +14,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   try {
     const decoded = verifyToken(token); 
     req.userId = decoded.userId;
+    req.subscriptionExpiring = decoded.subscriptionExpiring;
     next();
   } catch (error: any) {
     console.error('JWT verification failed:', error.message);

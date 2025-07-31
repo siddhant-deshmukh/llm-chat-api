@@ -1,8 +1,8 @@
 import { db } from "@src/db";
 import { otps } from "@src/db/schema";
 import { and, desc, eq, gt } from "drizzle-orm";
+import HttpStatusCodes from "@src/common/constants/HttpStatusCodes";
 import { RouteError } from "./route-errors";
-import HttpStatusCodes from "../constants/HttpStatusCodes";
 
 export const generateRandomOtp = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString(); // Generates a 6-digit number

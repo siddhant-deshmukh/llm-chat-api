@@ -3,10 +3,10 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '@src/db';
 import { users, otps } from '@src/db/schema';
-import { generateToken } from '@src/common/util/jwt';
-import { RouteError } from '@src/common/util/route-errors';
+import { generateToken } from '@src/util/jwt';
+import { RouteError } from '@src/util/route-errors';
 import HttpStatusCodes from '@src/common/constants/HttpStatusCodes';
-import { checkLatestOtp, generateRandomOtp } from '@src/common/util/otp';
+import { checkLatestOtp, generateRandomOtp } from '@src/util/otp';
 
 interface SignUpInput {
   name: string;
@@ -80,6 +80,7 @@ export async function SignIn(data: SignInInput) {
     userId: user.id,
     mobileNo: user.mobileNo,
     verified: user.verified,
+    subscriptionExpiring: user.subscriptionExpiring
   });
 
   return {
@@ -137,6 +138,7 @@ export async function VerifyOtp(data: VerifyOtpInput) {
     userId: user.id,
     mobileNo: user.mobileNo,
     verified: true,
+    subscriptionExpiring: user.subscriptionExpiring
   });
 
   return {
