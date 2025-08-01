@@ -15,6 +15,13 @@
       "when": 1753962465516,
       "tag": "0001_quiet_harry_osborn",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1754059286217,
+      "tag": "0002_lying_scourge",
+      "breakpoints": true
     }
   ]
 }

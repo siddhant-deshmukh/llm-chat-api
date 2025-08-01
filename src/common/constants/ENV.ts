@@ -15,6 +15,9 @@ const ENV = jetEnv({
   JwtSecret: str,
   GeminiApiKey: str,
   RedisUrl: str,
+  StripeSecretKey: str,
+  StripeWebhookSecret: str,
+  StripeProPriceId: str,
 });
 
 

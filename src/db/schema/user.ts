@@ -9,6 +9,7 @@ export const users = pgTable('users', {
   mobileNo: text('mobile_no').unique().notNull(),
   verified: boolean('verified').default(false).notNull(),
   subscriptionExpiring: timestamp('subscription_expiring', { withTimezone: true }),
+  stripeCustomerId: text('stripeCustomerId'),
   createdAt: timestamp('created_at', { withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
