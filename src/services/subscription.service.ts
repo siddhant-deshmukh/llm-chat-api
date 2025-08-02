@@ -11,6 +11,11 @@ export const webHookController = async (req: Request, res: Response) => {
 
   let event: Stripe.Event;
 
+  console.log(req.body);
+  if(!req.body) {
+    console.log('requestion \n\n', req)
+  }
+
   try {
     // Verify webhook signature
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
