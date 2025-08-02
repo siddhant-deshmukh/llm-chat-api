@@ -1,6 +1,6 @@
-import { createClient, RedisClientType } from 'redis';
+import logger from 'jet-logger';
 import ENV from '@src/common/constants/ENV';
-
+import { createClient, RedisClientType } from 'redis';
 
 const REDIS_URL = ENV.RedisUrl;
 
@@ -16,7 +16,7 @@ async function connectRedis() {
     url: REDIS_URL,
   }) as RedisClientType;
 
-  redisClient.on('error', (err) => console.error('Redis Client Error:', err));
+  redisClient.on('error', (err) => logger.err(err, true));
   redisClient.on('connect', () => console.log('Redis client connected.'));
   redisClient.on('end', () => console.log('Redis client disconnected.'));
   redisClient.on('reconnecting', () => console.log('Redis client reconnecting...'));
@@ -25,7 +25,7 @@ async function connectRedis() {
     await redisClient.connect();
     console.log('Successfully connected to Redis!');
   } catch (err) {
-    console.error('Failed to connect to Redis:', err);
+    logger.err(err, true);
   }
   return redisClient;
 }

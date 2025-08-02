@@ -1,6 +1,7 @@
+import logger from 'jet-logger';
 import { Request, Response, NextFunction } from 'express';
-import { db } from '@src/db'; // Your Drizzle DB instance
-import { chatrooms } from '@src/db/schema'; // Your chatrooms schema
+import { db } from '@src/db';
+import { chatrooms } from '@src/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { RouteError } from '@src/util/route-errors';
 import HttpStatusCodes from '@src/common/constants/HttpStatusCodes';
@@ -12,7 +13,7 @@ export async function authorizeChatroomAccess(
   next: NextFunction
 ) {
   if (!req.userId) {
-    console.warn('Unauthorized access attempt: userId not found on request object.');
+    logger.warn('Unauthorized access attempt: userId not found on request object.');
     return next(new RouteError(HttpStatusCodes.UNAUTHORIZED, 'Authentication required.'));
   }
   const chatId = parseInt(req.params.id, 10);
@@ -32,7 +33,7 @@ export async function authorizeChatroomAccess(
   });
 
   if (!chatroom) {
-    console.warn(`Access denied: Chatroom ${chatId} not found or does not belong to user ${req.userId}.`);
+    logger.warn(`Access denied: Chatroom ${chatId} not found or does not belong to user ${req.userId}.`);
     return next(new RouteError(HttpStatusCodes.FORBIDDEN, 'You do not have permission to access this chatroom.'));
   }
   next();

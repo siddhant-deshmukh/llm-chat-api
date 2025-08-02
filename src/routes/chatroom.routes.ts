@@ -3,18 +3,15 @@ import {
   createChatroom,
   listChatrooms,
   getChatroomDetails,
-  sendMessageAndGetGeminiResponse,
   rateLimit,
   getLastMessage,
 } from '../services/chatroom.service';
-import { authenticateToken } from '@src/middleware/auth.middleware';
-import HttpStatusCodes from '@src/common/constants/HttpStatusCodes';
 import { RouteError } from '@src/util/route-errors';
-import { authorizeChatroomAccess } from '@src/middleware/chatroom.access.middleware';
 import { geminiQueue } from '@src/config/geminiQueue';
-import { db } from '@src/db';
-import { eq } from 'drizzle-orm';
-import { messages } from '@src/db/schema';
+import HttpStatusCodes from '@src/common/constants/HttpStatusCodes';
+import { authenticateToken } from '@src/middleware/auth.middleware';
+import { authorizeChatroomAccess } from '@src/middleware/chatroom.access.middleware';
+
 
 const chatroomRouter = Router();
 
@@ -82,18 +79,12 @@ chatroomRouter.post('/:id/message', authorizeChatroomAccess, async (req, res) =>
     throw new RouteError(HttpStatusCodes.BAD_REQUEST, 'Message text is required.');
   }
 
-  // const rateLimitResult = await rateLimit(userId, req.subscriptionExpiring);
+  const rateLimitResult = await rateLimit(userId, req.subscriptionExpiring);
 
-  // if (!rateLimitResult) {
-  //   throw new RouteError(HttpStatusCodes.TOO_MANY_REQUESTS, 'Rate limit exceeded')
-  // }
+  if (!rateLimitResult) {
+    throw new RouteError(HttpStatusCodes.TOO_MANY_REQUESTS, 'Rate limit exceeded')
+  }
 
-  // const result = await sendMessageAndGetGeminiResponse({
-  //   chatId,
-  //   userId,
-  //   userMessage,
-  //   subscriptionExpiring: req.subscriptionExpiring
-  // });
   await geminiQueue.add('sendMessage', {
     chatId,
     userId,

@@ -73,7 +73,7 @@ app.use((err: Error, _: Request, res: Response, next: NextFunction) => {
 });
 
 connectRedis().catch(err => {
-  console.error("Failed to start Redis connection:", err);
+  logger.err(err, true);
 });
 
 

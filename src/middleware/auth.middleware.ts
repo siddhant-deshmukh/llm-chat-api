@@ -1,5 +1,7 @@
 
+import logger from 'jet-logger';
 import { Request, Response, NextFunction } from 'express';
+
 import { verifyToken } from '@src/util/jwt';
 import { RouteError } from '@src/util/route-errors';
 import HttpStatusCodes from '@src/common/constants/HttpStatusCodes';
@@ -17,7 +19,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     req.subscriptionExpiring = decoded.subscriptionExpiring;
     next();
   } catch (error: any) {
-    console.error('JWT verification failed:', error.message);
+    logger.err(error, true);
     throw new RouteError(HttpStatusCodes.FORBIDDEN, 'Authentication token missing.')
   }
 };

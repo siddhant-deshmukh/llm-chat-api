@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import logger from 'jet-logger';
 import { eq, sql } from 'drizzle-orm';
 import { Request, Response } from 'express';
 
@@ -16,7 +17,7 @@ export const webHookController = async (req: Request, res: Response) => {
     
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err);
+    logger.err(err, true);
     return res.status(400).send(`Webhook Error: ${err}`);
   }
 
@@ -36,13 +37,13 @@ export const webHookController = async (req: Request, res: Response) => {
         break;
 
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        logger.info(`Unhandled event type ${event.type}`);
     }
 
     res.json({ received: true });
   } catch (error) {
-    console.error('Webhook handling error:', error);
-    res.status(500).json({ error: 'Webhook handling failed' });
+    logger.err(error, true);
+    res.status(500).json({ error: '' });
   }
 }
 
@@ -89,5 +90,5 @@ async function handlePaymentFailed(paymentIntent: any) {
     .set({ status: 'failed' })
     .where(eq(payments.stripeSubscriptionId, paymentIntent.id));
 
-  console.log('Payment failed:', paymentIntent.id);
-}
+  logger.info('Payment failed:', paymentIntent.id);
+}webHookController
