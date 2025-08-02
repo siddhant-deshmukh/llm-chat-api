@@ -5,7 +5,8 @@ import { RouteError } from '@src/util/route-errors';
 import { db } from '@src/db';
 import { chatrooms, messages } from '@src/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
-import { getCache, setCache } from '@src/util/redis';
+import { deleteCache, getCache, setCache } from '@src/util/redis';
+import { geminiQueue } from '@src/config/geminiQueue';
 
 const CHATROOM_LIST_TTL_SECONDS = 300; // 5 minutes
 
@@ -19,6 +20,9 @@ export async function createChatroom(data: CreateChatroomInput) {
     userId: data.userId,
     title: data.title,
   }).returning();
+
+  const cacheKey = `user:${data.userId}:chatrooms`;
+  await deleteCache(cacheKey);
 
   if (!newChatroom) {
     throw new RouteError(HttpStatusCodes.INTERNAL_SERVER_ERROR, 'Failed to create chatroom.');
@@ -68,12 +72,6 @@ interface SendMessageInput {
 }
 
 export async function sendMessageAndGetGeminiResponse(data: SendMessageInput) {
-
-  const rateLimitResult = await rateLimit(data.userId, data.subscriptionExpiring);
-
-  if (!rateLimitResult) {
-    throw new RouteError(HttpStatusCodes.TOO_MANY_REQUESTS, 'Rate limit exceeded')
-  }
 
   const chatroom = await db.query.chatrooms.findFirst({
     where: and(eq(chatrooms.id, data.chatId), eq(chatrooms.userId, data.userId)),
@@ -134,7 +132,7 @@ function formatMessagesForGemini(chatMessages: typeof messages.$inferSelect[]): 
   });
 }
 
-async function rateLimit(userId: number, subscriptionExpiring?: Date | null) {
+export async function rateLimit(userId: number, subscriptionExpiring?: Date | null) {
   try {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const key = `rate_limit:${userId}:${today}`;
@@ -153,7 +151,25 @@ async function rateLimit(userId: number, subscriptionExpiring?: Date | null) {
     }
 
     return true;
-  } catch (err) { 
+  } catch (err) {
     throw new RouteError(HttpStatusCodes.INTERNAL_SERVER_ERROR, 'Something went wrong');
+  }
+}
+
+export async function  getLastMessage(chatId: number) {
+  const lastMessages = await db.query.messages.findMany({
+    where: eq(messages.chatId, chatId),
+    orderBy: (msg, { desc }) => [desc(msg.createdAt)],
+    limit: 2,
+  });
+
+  if (lastMessages.length === 0) {
+    return null;
+  }
+
+  const [latest, previous] = lastMessages;
+
+  if (latest.author === 'system') {
+    return latest
   }
 }

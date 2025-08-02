@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import logger from 'jet-logger';
 import express, { Request, Response, NextFunction } from 'express';
 
+import '@src/workers/geminiWorker';
 import ENV from '@src/common/constants/ENV';
 import { connectRedis } from '@src/config/redis';
 import { NodeEnvs } from '@src/common/constants';

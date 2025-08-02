@@ -14,7 +14,7 @@ async function connectRedis() {
 
   redisClient = createClient({
     url: REDIS_URL,
-  }) as RedisClientType; 
+  }) as RedisClientType;
 
   redisClient.on('error', (err) => console.error('Redis Client Error:', err));
   redisClient.on('connect', () => console.log('Redis client connected.'));
@@ -30,5 +30,18 @@ async function connectRedis() {
   return redisClient;
 }
 
-export { connectRedis, redisClient };
+const parsedUrl = new URL(ENV.RedisUrl);
+
+const redisConnection = {
+  host: parsedUrl.hostname,
+  port: parseInt(parsedUrl.port, 10),
+  password: parsedUrl.password || undefined,
+  db: parsedUrl.pathname.slice(1) ? parseInt(parsedUrl.pathname.slice(1), 10) : 0,
+}
+
+export {
+  connectRedis,
+  redisClient,
+  redisConnection
+}
 
