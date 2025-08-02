@@ -18,7 +18,7 @@ import { webHookController } from './services/subscription.service';
 const app = express();
 
 
-app.post('/webhook/stripe', webHookController);
+app.post('/webhook/stripe', express.raw({ type: 'application/json' }), webHookController);
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
