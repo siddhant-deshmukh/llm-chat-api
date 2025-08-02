@@ -11,11 +11,6 @@ export const webHookController = async (req: Request, res: Response) => {
 
   let event: Stripe.Event;
 
-  console.log(req.body);
-  if(!req.body) {
-    console.log('requestion \n\n', req)
-  }
-
   try {
     // Verify webhook signature
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
@@ -55,6 +50,7 @@ export const webHookController = async (req: Request, res: Response) => {
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId ? parseInt(session.metadata.userId) : 0;
 
+
   await db.update(payments)
     .set({ status: 'completed' })
     .where(eq(payments.stripeSubscriptionId, session.id));
@@ -68,9 +64,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 // Helper function to handle successful payment
-async function handlePaymentSucceeded(paymentIntent: any) {
+async function handlePaymentSucceeded(session: Stripe.PaymentIntent) {
   // Additional logic if needed
-  console.log('Payment succeeded:', paymentIntent.id);
+  const userId = session.metadata?.userId ? parseInt(session.metadata.userId) : 0;
+
+
+  await db.update(payments)
+    .set({ status: 'completed' })
+    .where(eq(payments.stripeSubscriptionId, session.id));
+
+  // Update user subscription expiration
+  await db.update(users)
+    .set({
+      subscriptionExpiring: sql`${users.subscriptionExpiring} + INTERVAL '1 day'`,
+    })
+    .where(eq(users.id, userId));
 }
 
 // Helper function to handle failed payment
