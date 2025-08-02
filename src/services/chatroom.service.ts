@@ -141,6 +141,8 @@ export async function rateLimit(userId: number, subscriptionExpiring?: Date | nu
 
     const current = (await getCache(key)) as number | null;
 
+    console.log('current, limit', current, limit);
+    
     if (!current) {
       // Set expiry for the key (24 hours + buffer for timezone handling)
       await setCache(key, 1); // 25 hours

@@ -57,7 +57,7 @@ chatroomRouter.get('/:id', authorizeChatroomAccess, async (req, res) => {
   }
   if (!userId) {
     throw new RouteError(HttpStatusCodes.UNAUTHORIZED, 'Authentication required.');
-  }
+  } userId
 
   const chatroom = await getChatroomDetails(chatId, userId);
   res.status(HttpStatusCodes.OK).json(chatroom);
@@ -90,6 +90,13 @@ chatroomRouter.post('/:id/message', authorizeChatroomAccess, async (req, res) =>
     userId,
     userMessage,
     subscriptionExpiring: req.subscriptionExpiring
+  }, {
+    removeOnComplete: {
+      age: 60,
+    },
+    removeOnFail: {
+      age: 60,
+    },
   });
   res.status(HttpStatusCodes.ACCEPTED).json({ message: "Request send try calling /chatroom/:id/latest" });
 });
