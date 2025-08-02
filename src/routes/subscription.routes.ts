@@ -1,12 +1,18 @@
 import { db } from '@src/db';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { Router, Request, Response } from 'express';
 import { stripe, STRIPE_CONFIG } from '@src/config/stripe';
-import { users, payments, subscriptions } from '@src/db/schema';
+import { users, payments } from '@src/db/schema';
 import { authenticateToken } from '@src/middleware/auth.middleware';
+import Stripe from 'stripe';
 
 const router = Router();
 
+const plan = {
+  id: 1,
+  // startDate: new Date(),
+  // endDate: new Date(),
+}
 
 router.post('/subscribe/pro', authenticateToken, async (req: Request, res: Response) => {
   try {
@@ -41,11 +47,7 @@ router.post('/subscribe/pro', authenticateToken, async (req: Request, res: Respo
 
     // const plan = proSubscription[0];
 
-    const plan = {
-      id: 1,
-      startDate: new Date(),
-      endDate: new Date(),
-    }
+
     // Create or get Stripe customer
     let customerId = currentUser.stripeCustomerId;
 
@@ -65,7 +67,7 @@ router.post('/subscribe/pro', authenticateToken, async (req: Request, res: Respo
         .set({ stripeCustomerId: customerId })
         .where(eq(users.id, userId));
     }
-    
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -87,11 +89,11 @@ router.post('/subscribe/pro', authenticateToken, async (req: Request, res: Respo
     // Create pending payment record
     await db.insert(payments).values({
       userId,
-      amount: 0, // Will be updated via webhook
-      subscribedFor: `${plan.startDate.toDateString()} to ${plan.endDate.toDateString()}`,
+      amount: 0,
+      // subscribedFor: `${plan.startDate.toDateString()} to ${plan.endDate.toDateString()}`,
       stripeSubscriptionId: session.id,
       currency: 'INR',
-      expiringAt: plan.endDate,
+      // expiringAt: plan.endDate,
       createdAt: new Date(),
       status: 'pending',
     });
@@ -150,7 +152,7 @@ router.post('/webhook/stripe', async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string;
   const endpointSecret = STRIPE_CONFIG.webhookSecret;
 
-  let event: any;
+  let event: Stripe.Event;
 
   try {
     // Verify webhook signature
@@ -187,43 +189,19 @@ router.post('/webhook/stripe', async (req: Request, res: Response) => {
 });
 
 // Helper function to handle successful checkout
-async function handleCheckoutCompleted(session: any) {
-  const userId = parseInt(session.metadata.userId);
-  const subscriptionId = parseInt(session.metadata.subscriptionId);
+async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  const userId = session.metadata?.userId ? parseInt(session.metadata.userId) : 0;
 
-  // Get subscription plan details
-  const subscription = await db.select()
-    .from(subscriptions)
-    .where(eq(subscriptions.id, subscriptionId))
-    .limit(1);
-
-  if (!subscription.length) {
-    console.error('Subscription plan not found:', subscriptionId);
-    return;
-  }
-
-  const plan = subscription[0];
-
-  // Calculate new expiration date
-  const now = new Date();
-  const expirationDate = new Date(now.getTime() + (plan.endDate.getTime() - plan.startDate.getTime()));
-
-  // Update payment record
   await db.update(payments)
-    .set({
-      status: 'completed',
-      amount: session.amount_total,
-    })
+    .set({ status: 'completed' })
     .where(eq(payments.stripeSubscriptionId, session.id));
 
   // Update user subscription expiration
   await db.update(users)
     .set({
-      subscriptionExpiring: expirationDate,
+      subscriptionExpiring: sql`${users.subscriptionExpiring} + INTERVAL '1 day'`,
     })
     .where(eq(users.id, userId));
-
-  console.log(`Subscription activated for user ${userId} until ${expirationDate}`);
 }
 
 // Helper function to handle successful payment
