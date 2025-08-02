@@ -13,9 +13,12 @@ import { RouteError } from '@src/util/route-errors';
 import chatroomRouter from '@src/routes/chatroom.routes';
 import subscribeRouter from '@src/routes/subscription.routes';
 import HttpStatusCodes from '@src/common/constants/HttpStatusCodes';
+import { webHookController } from './services/subscription.service';
 
 const app = express();
 
+
+app.post('/webhook/stripe', webHookController);
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
