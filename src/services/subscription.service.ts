@@ -1,9 +1,10 @@
-import { stripe, STRIPE_CONFIG } from '@src/config/stripe';
+import Stripe from 'stripe';
+import { eq, sql } from 'drizzle-orm';
+import { Request, Response } from 'express';
+
 import { db } from '@src/db';
 import { payments, users } from '@src/db/schema';
-import { eq, sql } from 'drizzle-orm';
-import { Router, Request, Response } from 'express';
-import Stripe from 'stripe';
+import { stripe, STRIPE_CONFIG } from '@src/config/stripe';
 
 export const webHookController = async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string;
@@ -12,7 +13,7 @@ export const webHookController = async (req: Request, res: Response) => {
   let event: Stripe.Event;
 
   try {
-    // Verify webhook signature
+    
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
@@ -20,7 +21,7 @@ export const webHookController = async (req: Request, res: Response) => {
   }
 
   try {
-    // Handle the event
+    
     switch (event.type) {
       case 'checkout.session.completed':
         await handleCheckoutCompleted(event.data.object);
@@ -46,7 +47,7 @@ export const webHookController = async (req: Request, res: Response) => {
 }
 
 
-// Helper function to handle successful checkout
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId ? parseInt(session.metadata.userId) : 0;
 
@@ -55,25 +56,25 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     .set({ status: 'completed' })
     .where(eq(payments.stripeSubscriptionId, session.id));
 
-  // Update user subscription expiration
+  
   await db.update(users)
     .set({
-      subscriptionExpiring: sql`${users.subscriptionExpiring} + INTERVAL '1 day'`,
+      subscriptionExpiring: sql`COALESCE(${users.subscriptionExpiring}, CURRENT_TIMESTAMP) + INTERVAL '1 day'`,
     })
     .where(eq(users.id, userId));
 }
 
-// Helper function to handle successful payment
-async function handlePaymentSucceeded(session: Stripe.PaymentIntent) {
-  // Additional logic if needed
-  const userId = session.metadata?.userId ? parseInt(session.metadata.userId) : 0;
 
+async function handlePaymentSucceeded(session: Stripe.PaymentIntent) {
+  
+  const userId = session.metadata?.userId ? parseInt(session.metadata.userId) : 0;
+  
 
   await db.update(payments)
     .set({ status: 'completed' })
     .where(eq(payments.stripeSubscriptionId, session.id));
 
-  // Update user subscription expiration
+  
   await db.update(users)
     .set({
       subscriptionExpiring: sql`${users.subscriptionExpiring} + INTERVAL '1 day'`,
@@ -81,9 +82,9 @@ async function handlePaymentSucceeded(session: Stripe.PaymentIntent) {
     .where(eq(users.id, userId));
 }
 
-// Helper function to handle failed payment
+
 async function handlePaymentFailed(paymentIntent: any) {
-  // Update payment status to failed
+  
   await db.update(payments)
     .set({ status: 'failed' })
     .where(eq(payments.stripeSubscriptionId, paymentIntent.id));

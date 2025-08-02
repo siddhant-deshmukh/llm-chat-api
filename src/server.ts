@@ -50,6 +50,9 @@ if (ENV.NodeEnv === NodeEnvs.Production) {
 app.get('/', (_, res)=> {
   res.status(HttpStatusCodes.ACCEPTED).json({ msg: "Working!" });
 });
+app.get('/success', (_, res)=> {
+  res.status(HttpStatusCodes.ACCEPTED).json({ msg: "Payment done!" });
+});
 
 app.use('/', subscribeRouter);
 app.use('/auth', authRouter);

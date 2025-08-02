@@ -4,7 +4,8 @@ import { Router, Request, Response } from 'express';
 import { stripe, STRIPE_CONFIG } from '@src/config/stripe';
 import { users, payments } from '@src/db/schema';
 import { authenticateToken } from '@src/middleware/auth.middleware';
-import Stripe from 'stripe';
+import { RouteError } from '@src/util/route-errors';
+import HttpStatusCodes from '@src/common/constants/HttpStatusCodes';
 
 const router = Router();
 
@@ -16,9 +17,8 @@ const plan = {
 
 router.post('/subscribe/pro', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const userId = req.userId!; // From authenticateToken middleware
-
-    // Check if user already has active subscription
+    const userId = req.userId!;
+  
     const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user.length) {
       return res.status(404).json({ error: 'User not found' });
@@ -27,12 +27,8 @@ router.post('/subscribe/pro', authenticateToken, async (req: Request, res: Respo
     const currentUser = user[0];
     const now = new Date();
 
-    // Check if user already has active subscription
     if (currentUser.subscriptionExpiring && currentUser.subscriptionExpiring > now) {
-      return res.status(400).json({
-        error: 'User already has active subscription',
-        expiresAt: currentUser.subscriptionExpiring
-      });
+      throw new RouteError(HttpStatusCodes.BAD_REQUEST, 'User already has active subscription');
     }
 
     // Get Pro subscription plan (assuming 28 days for Pro)
